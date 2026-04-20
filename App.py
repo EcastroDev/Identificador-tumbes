@@ -331,7 +331,7 @@ def buscar_matricula(df: pd.DataFrame, matricula: str, col: str) -> pd.Series | 
 st.markdown("""
 <div class="header-block">
   <h1>⚓ VERIFICADOR<br>DE EMBARCACIONES</h1>
-  <p>DIREPRO TUMBES · PRODUCE</p>
+  <p>MINISTERIO DE LA PRODUCCIÓN</p>
 </div>
 """, unsafe_allow_html=True)
 
