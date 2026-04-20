@@ -416,7 +416,7 @@ with st.expander("⚖️ Base legal"):
 
 st.markdown("""
 <div class="footer">
-   · PRODUCE · USO  EN CAMPO<br>
+   · PRODUCE · USO m EN CAMPO<br>
   Datos según lista PRODUCE vigente
 </div>
 """, unsafe_allow_html=True)
