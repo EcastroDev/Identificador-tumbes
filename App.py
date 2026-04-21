@@ -196,64 +196,54 @@ def buscar(df, termino_raw, col_mat, col_nom=None):
 
 
 # ── FICHA FISCALIZADOR ────────────────────────────────────────────────────────
+def fila_html(label, valor, color=None):
+    """Genera una fila de la ficha SIN saltos de línea ni indentación."""
+    if color:
+        return (f'<div class="ficha-row"><span class="ficha-lbl">{label}</span>'
+                f'<span class="ficha-val" style="color:{color};">{valor}</span></div>')
+    v = str(valor).strip()
+    ok = v and v.lower() not in ("nan", "none", "", "0")
+    cls = "ficha-val" if ok else "ficha-nr"
+    txt = v if ok else "No registra"
+    return (f'<div class="ficha-row"><span class="ficha-lbl">{label}</span>'
+            f'<span class="{cls}">{txt}</span></div>')
+
+
 def render_ficha(fila, cfg):
-    col_mat  = cfg["col_mat"]
-    col_nom  = cfg["col_nom"]
+    col_mat   = cfg["col_mat"]
+    col_nom   = cfg["col_nom"]
     etiquetas = cfg["etiquetas"]
-    recurso  = cfg["nombre"]
+    recurso   = cfg["nombre"]
 
-    nombre_emb    = str(fila.get(col_nom, "")).strip() or "No registra"
-    matricula_emb = str(fila.get(col_mat, "")).strip().upper() or "—"
+    nombre_emb = str(fila.get(col_nom, "")).strip() or "No registra"
 
-    # Construir filas de la ficha en el orden definido en etiquetas
-    filas_html = f"""
-    <div class="ficha-row">
-      <span class="ficha-lbl">Recurso verificado</span>
-      <span class="ficha-val" style="color:#00d4aa;">{recurso}</span>
-    </div>"""
+    # Construir filas — todo en una sola línea, sin espacios/newlines entre tags
+    rows = fila_html("Recurso verificado", recurso, color="#00d4aa")
 
     cols_ya = set()
+    # Primero: columnas en el orden definido en etiquetas
+    for col, label in etiquetas.items():
+        if col in fila.index and col not in cols_ya:
+            cols_ya.add(col)
+            if label is None:
+                continue   # columna oculta (ej. Puntuación de Pota)
+            rows += fila_html(label, fila[col])
 
-    def add(col):
-        nonlocal filas_html
-        if col in cols_ya or col not in fila.index: return
-        cols_ya.add(col)
-        label = etiquetas.get(col)
-        if label is None: return          # columna oculta
-        v = str(fila[col]).strip()
-        ok = v and v.lower() not in ("nan","none","","0")
-        if ok:
-            filas_html += (f'<div class="ficha-row">'
-                           f'<span class="ficha-lbl">{label}</span>'
-                           f'<span class="ficha-val">{v}</span>'
-                           f'</div>')
-        else:
-            filas_html += (f'<div class="ficha-row">'
-                           f'<span class="ficha-lbl">{label}</span>'
-                           f'<span class="ficha-nr">No registra</span>'
-                           f'</div>')
-
-    # Orden: primero columnas definidas en etiquetas, luego el resto
-    for col in etiquetas:
-        add(col)
+    # Luego: columnas extra no mapeadas
     for col in fila.index:
         if col not in cols_ya:
-            # Columnas extra no mapeadas: mostrar con nombre tal cual
-            if col not in cols_ya:
-                cols_ya.add(col)
-                v = str(fila[col]).strip()
-                if v and v.lower() not in ("nan","none","","0"):
-                    filas_html += (f'<div class="ficha-row">'
-                                   f'<span class="ficha-lbl">{col}</span>'
-                                   f'<span class="ficha-val">{v}</span>'
-                                   f'</div>')
+            v = str(fila[col]).strip()
+            if v and v.lower() not in ("nan", "none", "", "0"):
+                rows += fila_html(col, v)
 
-    return f"""
-<div class="result-ok">
-  <div class="badge-ok">✅ AUTORIZADA</div>
-  <div class="vessel-name">{nombre_emb}</div>
-  {filas_html}
-</div>"""
+    # Return como cadena única sin indentación interna
+    return (
+        '<div class="result-ok">'
+        '<div class="badge-ok">✅ AUTORIZADA</div>'
+        f'<div class="vessel-name">{nombre_emb}</div>'
+        f'{rows}'
+        '</div>'
+    )
 
 
 # ── UI ────────────────────────────────────────────────────────────────────────
